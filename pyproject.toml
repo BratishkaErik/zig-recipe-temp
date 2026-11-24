@@ -1,0 +1,79 @@
+[build-system]
+requires = ["flit_core>=4.0.2,<5"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "zig-recipe"
+version = "0.1.0"
+description = "Generate package manager recipes from Zig projects"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [
+    { name = "Eric Joldasov", email = "bratishkaerik@landless-city.net" },
+]
+keywords = ["zig", "packaging", "gentoo", "ebuild", "recipe"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Zig",
+    "Typing :: Typed",
+]
+dependencies = [
+    "jinja2>=3.1.6",
+    "natizon>=0.4.7",
+    "platformdirs>=4.3.0",
+    "rich>=14.0.0",
+    "semver>=3.0.4",
+    "typer>=0.15.0",
+    "yarl>=1.18.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/BratishkaErik/zig-recipe"
+Repository = "https://github.com/BratishkaErik/zig-recipe"
+Issues = "https://github.com/BratishkaErik/zig-recipe/issues"
+
+[project.scripts]
+zig-recipe = "zig_recipe.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.11.0",
+    "ty>=0.0.1a7",
+]
+
+[tool.flit.module]
+name = "zig_recipe"
+
+[tool.flit.sdist]
+include = [
+    "tests/**",
+    "docs/**",
+]
+exclude = [
+    "tests/**/__pycache__/**",
+    "tests/**/*.pyc",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "requires_zig: integration tests requiring a Zig 0.17+ executable",
+]

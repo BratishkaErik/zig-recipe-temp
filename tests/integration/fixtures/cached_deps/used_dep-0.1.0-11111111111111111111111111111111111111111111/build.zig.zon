@@ -1,0 +1,6 @@
+.{
+    .name = .used_dep,
+    .version = "0.1.0",
+    .fingerprint = 0xfca657993adea8e3,
+    .paths = .{""},
+}

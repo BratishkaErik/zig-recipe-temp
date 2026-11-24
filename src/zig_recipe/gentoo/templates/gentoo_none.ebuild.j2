@@ -1,0 +1,137 @@
+{# Gentoo EAPI 8 ebuild template (no helper comments). Generated output may be freely relicensed. -#}
+# Copyright {{ year }} Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+{%- if not use_zbs_packages and has_zbs_entries %}
+
+declare -g -r -A ZBS_DEPENDENCIES=(
+{%- for dep in always_tarballs %}
+	[{{ dep.filename }}]='{{ dep.url }}'
+{%- endfor %}
+{%- for dep in conditional_tarballs %}
+	[{{ dep.filename }}]='{{ dep.url }}'
+{%- endfor %}
+{%- if unused_tarballs and unused_deps == 'keep' %}
+{%- for dep in unused_tarballs %}
+	[{{ dep.filename }}]='{{ dep.url }}'
+{%- endfor %}
+{%- endif %}
+{%- if tarball_tarball %}
+{%- for dep in git_commits %}
+	[{{ dep.filename }}]=''
+{%- endfor %}
+{%- endif %}
+)
+{%- endif %}
+{{ "" }}
+{%- if needs_llvm %}
+ZIG_NEEDS_LLVM=1
+{%- endif %}
+ZIG_SLOT="{{ zig_slot }}"
+inherit zig
+
+DESCRIPTION="{{ summary or 'TODO' }}"
+HOMEPAGE="{{ homepage }}"
+{%- if use_zbs_packages and has_zbs_packages %}
+
+declare -g -r -A ZBS_PACKAGES=(
+{%- for entry in always_pkg_entries %}
+{%- for line in entry.lines %}
+{{ line }}
+{%- endfor %}
+{%- endfor %}
+{%- for entry in conditional_pkg_entries %}
+{%- for line in entry.lines %}
+{{ line }}
+{%- endfor %}
+{%- endfor %}
+{%- if unused_deps == 'keep' %}
+{%- for entry in unused_pkg_entries %}
+{%- for line in entry.lines %}
+{{ line }}
+{%- endfor %}
+{%- endfor %}
+{%- endif %}
+)
+{%- endif %}
+{%- if use_zbs_packages and git_commits %}
+
+declare -g -r -a ZBS_BUNDLED_PACKAGES=(
+{%- for dep in git_commits %}
+	{{ dep.filename }}
+{%- endfor %}
+)
+{%- endif %}
+
+SRC_URI="
+{%- for uri in src_uri_entries %}
+	{{ uri }}
+{%- endfor %}
+{%- if use_zbs_packages %}
+{%- for entry in always_pkg_entries %}
+	${ZBS_PACKAGES[{{ entry.alias }}]}
+{%- endfor %}
+{%- if unused_deps == 'keep' %}
+{%- for entry in unused_pkg_entries %}
+	${ZBS_PACKAGES[{{ entry.alias }}]}
+{%- endfor %}
+{%- endif %}
+{%- for flag, aliases in conditional_src_uri_groups %}
+{%- if aliases | length == 1 %}
+	{{ flag }}? ( ${ZBS_PACKAGES[{{ aliases[0] }}]} )
+{%- else %}
+	{{ flag }}? (
+{%- for alias in aliases %}
+		${ZBS_PACKAGES[{{ alias }}]}
+{%- endfor %}
+	)
+{%- endif %}
+{%- endfor %}
+{%- else %}
+{%- if has_active_tarballs %}
+	${ZBS_DEPENDENCIES_SRC_URI}
+{%- endif %}
+{%- endif %}
+"
+
+LICENSE="{{ license }}"
+SLOT="0"
+KEYWORDS="{{ keywords }}"
+{%- if iuse %}
+IUSE="{{ iuse | join(' ') }}"
+{%- endif %}
+{%- if restrict_test %}
+RESTRICT="!test? ( test )"
+{%- endif %}
+{%- if has_none_configure_body %}
+
+src_configure() {
+	local my_zbs_args=(
+	{%- for arg in base_zbs_args %}
+		{{ arg }}
+	{%- endfor %}
+	{%- for arg in variant_zbs_args %}
+		{{ arg }}
+	{%- endfor %}
+	{%- for si in enabled_integrations %}
+		-fsys={{ si.name }}
+	{%- endfor %}
+	{%- for si in disabled_integrations %}
+		-fsys={{ si.name }}
+	{%- endfor %}
+	)
+{%- for flag_name, on_args, off_args in variant_if_blocks %}
+
+	if use {{ flag_name }}; then
+		my_zbs_args+=( {{ on_args | join(' ') }} )
+	{%- if off_args %}
+	else
+		my_zbs_args+=( {{ off_args | join(' ') }} )
+	{%- endif %}
+	fi
+{%- endfor %}
+
+	zig_src_configure
+}
+{%- endif %}
