@@ -1,0 +1,55 @@
+{# Gentoo EAPI 8 ebuild template (no helper comments). Generated output may be freely relicensed. -#}
+# Copyright {{ year }} Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+
+DESCRIPTION="{{ summary or 'TODO' }}"
+HOMEPAGE="TODO"
+{%- if used_tarballs or unused_tarballs or git_commits %}
+
+declare -g -r -A ZBS_DEPENDENCIES=(
+{%- for dep in used_tarballs %}
+	[{{ dep.filename }}]='{{ dep.url }}'
+{%- endfor %}
+{%- for dep in unused_tarballs %}
+	[{{ dep.filename }}]='{{ dep.url }}'
+{%- endfor %}
+{%- if tarball_tarball %}
+{%- for dep in git_commits %}
+	[{{ dep.filename }}]=''
+{%- endfor %}
+{%- endif %}
+)
+{%- endif %}
+
+{%- if needs_llvm %}
+ZIG_NEEDS_LLVM=1
+{%- endif %}
+ZIG_SLOT="{{ zig_slot }}"
+inherit zig
+
+SRC_URI="
+{%- if used_tarballs or unused_tarballs %}
+	${ZBS_DEPENDENCIES_SRC_URI}
+{%- endif %}
+"
+
+LICENSE="TODO"
+SLOT="0"
+KEYWORDS="~amd64"
+{%- if system_integrations %}
+
+src_configure() {
+	local my_zbs_args=(
+	{%- for si in enabled_integrations %}
+		-fsys={{ si.name }}
+	{%- endfor %}
+	{%- for si in disabled_integrations %}
+		-fsys={{ si.name }}
+	{%- endfor %}
+	)
+
+	zig_src_configure
+}
+{%- endif %}
